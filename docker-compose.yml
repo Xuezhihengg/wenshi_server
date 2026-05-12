@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wenshi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wenshi}
+      POSTGRES_DB: ${POSTGRES_DB:-wenshi}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wenshi} -d ${POSTGRES_DB:-wenshi}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://wenshi:wenshi@postgres:5432/wenshi}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    ports:
+      - "${API_HOST_PORT:-8000}:8000"
+    volumes:
+      - uploads_data:/app/data/uploads
+      - logs_data:/app/data/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "alembic -c apps/api/alembic.ini upgrade head && uvicorn app.main:app --app-dir apps/api --host 0.0.0.0 --port 8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://wenshi:wenshi@postgres:5432/wenshi}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    volumes:
+      - logs_data:/app/data/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python -m app.worker.main
+    working_dir: /app/apps/api
+
+  admin-web:
+    build:
+      context: admin-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${ADMIN_VITE_API_BASE_URL:-/}
+        VITE_BASE_PATH: /admin/
+    depends_on:
+      - api
+
+  portal-web:
+    build:
+      context: ../wenshi-portal
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${PORTAL_VITE_API_BASE_URL:-/}
+    depends_on:
+      - api
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/certs:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot
+    depends_on:
+      - api
+      - admin-web
+      - portal-web
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads_data:
+  logs_data:
+  certbot_webroot:

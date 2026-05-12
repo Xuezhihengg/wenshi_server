@@ -1,0 +1,62 @@
+# Production overrides:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Differences from base:
+#   - postgres / redis / api are NOT exposed to the host network (only nginx is).
+#   - Containers restart automatically.
+#   - nginx also listens on 443 (mount your certs into infra/nginx/certs first).
+
+services:
+  postgres:
+    ports: !reset []
+    restart: unless-stopped
+
+  redis:
+    ports: !reset []
+    restart: unless-stopped
+
+  api:
+    ports: !reset []
+    restart: unless-stopped
+
+  worker:
+    restart: unless-stopped
+
+  admin-web:
+    restart: unless-stopped
+
+  portal-web:
+    restart: unless-stopped
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:v2.11.0
+    profiles: ["certbot"]
+    volumes:
+      - certbot_webroot:/var/www/certbot
+      - ./infra/nginx/certs:/etc/letsencrypt
+    entrypoint: ["certbot"]
+
+  backup:
+    image: postgres:16-alpine
+    profiles: ["backup"]
+    env_file: .env
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-wenshi}
+      PGDATABASE: ${POSTGRES_DB:-wenshi}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-wenshi}
+    volumes:
+      - ./infra/scripts/pg_backup.sh:/usr/local/bin/pg_backup.sh:ro
+      - backup_data:/backups
+    entrypoint: ["sh", "/usr/local/bin/pg_backup.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  backup_data:
