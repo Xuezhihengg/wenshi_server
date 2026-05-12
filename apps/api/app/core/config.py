@@ -1,3 +1,4 @@
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -16,8 +17,6 @@ class Settings(BaseSettings):
     log_dir: str = 'data/logs'
     log_file: str = 'api.log'
     log_level: str = 'INFO'
-    log_max_bytes: int = 20 * 1024 * 1024
-    log_backup_count: int = 10
     jwt_secret: str = 'dev-secret'
     jwt_issuer: str = 'wenshi-server'
     access_token_expire_minutes: int = 60
@@ -63,7 +62,11 @@ class Settings(BaseSettings):
 
     @property
     def log_path(self) -> Path:
-        return Path(self.log_dir) / self.log_file
+        return self.log_path_for_date(date.today().isoformat())
+
+    def log_path_for_date(self, date_text: str) -> Path:
+        year, month, day = date_text.split('-')
+        return Path(self.log_dir) / year / month / day / self.log_file
 
 
 @lru_cache

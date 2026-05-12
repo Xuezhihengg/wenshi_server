@@ -1,5 +1,6 @@
 async def test_admin_and_monitoring(client):
     import json
+    from datetime import date
     from uuid import uuid4
 
     from app.core.config import get_settings
@@ -120,9 +121,11 @@ async def test_admin_and_monitoring(client):
     unauthenticated_logs = await client.get('/api/v1/admin/logs')
     assert unauthenticated_logs.status_code in {401, 403}
 
-    logs_response = await client.get(f'/api/v1/admin/logs?level=error&q=manual&request_id={manual_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
+    log_date = date.today().isoformat()
+    logs_response = await client.get(f'/api/v1/admin/logs?date={log_date}&level=error&q=manual&request_id={manual_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
     assert logs_response.status_code == 200
     logs_json = logs_response.json()
+    assert logs_json['date'] == log_date
     assert len(logs_json['items']) == 1
     assert logs_json['items'][0]['event'] == 'manual.test'
     assert logs_json['items'][0]['status_code'] == 500
@@ -130,13 +133,13 @@ async def test_admin_and_monitoring(client):
 
     health_request_id = 'health-log-test'
     await client.get('/health', headers={'x-request-id': health_request_id})
-    health_logs = await client.get(f'/api/v1/admin/logs?request_id={health_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
+    health_logs = await client.get(f'/api/v1/admin/logs?date={log_date}&request_id={health_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
     assert health_logs.status_code == 200
     assert any(item['event'] == 'http.request' and item['status_code'] == 200 for item in health_logs.json()['items'])
 
     me_request_id = 'me-user-log-test'
     await client.get('/api/v1/auth/me', headers={'Authorization': f'Bearer {user_token}', 'x-request-id': me_request_id})
-    user_logs = await client.get(f'/api/v1/admin/logs?request_id={me_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
+    user_logs = await client.get(f'/api/v1/admin/logs?date={log_date}&request_id={me_request_id}&limit=10', headers={'Authorization': f'Bearer {token}'})
     assert user_logs.status_code == 200
     assert any(item['raw'].get('user_id') for item in user_logs.json()['items'])
 

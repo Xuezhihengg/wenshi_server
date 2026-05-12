@@ -1,17 +1,24 @@
 import json
 from collections.abc import Iterable
-from pathlib import Path
+from datetime import date
 from typing import Any
 
 from app.core.config import get_settings
 from app.schemas.admin import AdminLogItem, AdminLogPage
 
 
-async def query_logs(level: str | None = None, query: str | None = None, request_id: str | None = None, limit: int = 200) -> AdminLogPage:
+async def query_logs(
+    log_date: str | None = None,
+    level: str | None = None,
+    query: str | None = None,
+    request_id: str | None = None,
+    limit: int = 200,
+) -> AdminLogPage:
+    selected_date = log_date or date.today().isoformat()
     normalized_level = level.lower() if level else None
     keyword = query.lower() if query else None
     items: list[AdminLogItem] = []
-    for raw_line in _iter_log_lines():
+    for raw_line in _iter_log_lines(selected_date):
         if keyword and keyword not in raw_line.lower():
             continue
         parsed = _parse_log_line(raw_line)
@@ -24,28 +31,21 @@ async def query_logs(level: str | None = None, query: str | None = None, request
         items.append(parsed)
         if len(items) >= limit:
             break
-    return AdminLogPage(items=items)
+    return AdminLogPage(date=selected_date, items=items)
 
 
-def _iter_log_lines() -> Iterable[str]:
-    for path in _log_paths():
-        try:
-            with path.open(encoding='utf-8') as file:
-                lines = file.readlines()
-        except FileNotFoundError:
-            continue
-        for line in reversed(lines):
-            line = line.strip()
-            if line:
-                yield line
-
-
-def _log_paths() -> list[Path]:
+def _iter_log_lines(log_date: str) -> Iterable[str]:
     settings = get_settings()
-    base = Path(settings.log_dir)
-    current = base / settings.log_file
-    rotated = sorted(base.glob(f'{settings.log_file}.*'), key=lambda path: path.stat().st_mtime if path.exists() else 0, reverse=True)
-    return [current, *rotated]
+    path = settings.log_path_for_date(log_date)
+    try:
+        with path.open(encoding='utf-8') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        return
+    for line in reversed(lines):
+        line = line.strip()
+        if line:
+            yield line
 
 
 def _parse_log_line(raw_line: str) -> AdminLogItem | None:

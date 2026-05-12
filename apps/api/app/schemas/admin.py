@@ -87,6 +87,7 @@ class AdminLogItem(BaseModel):
 
 
 class AdminLogPage(BaseModel):
+    date: str
     items: list[AdminLogItem]
 
 

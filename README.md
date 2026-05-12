@@ -129,17 +129,15 @@ Verification codes are stored in Redis with TTL and are deleted after successful
 
 ## Logging
 
-API logs are structured JSON and are written to stdout and rotating files.
+API logs are structured JSON and are written to stdout and date-partitioned files.
 
 ```env
 LOG_DIR=data/logs
 LOG_FILE=api.log
 LOG_LEVEL=INFO
-LOG_MAX_BYTES=20971520
-LOG_BACKUP_COUNT=10
 ```
 
-Admin users can query recent logs from the admin web or `GET /api/v1/admin/logs`.
+Files are stored by date, for example `data/logs/2026/05/13/api.log`. Admin users can query logs by date from the admin web or `GET /api/v1/admin/logs?date=2026-05-13`.
 
 ## Apple Sign In
 

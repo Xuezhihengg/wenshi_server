@@ -10,3 +10,7 @@ node_modules/
 dist/
 .coverage
 htmlcov/
+
+
+data/uploads/
+data/logs/

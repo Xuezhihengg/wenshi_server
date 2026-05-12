@@ -85,9 +85,10 @@ async def portal_traffic(db: DbSession, _: CurrentAdmin, days: int = Query(14, g
 @router.get('/logs', response_model=AdminLogPage)
 async def logs(
     _: CurrentAdmin,
+    date: str | None = Query(None, pattern=r'^\d{4}-\d{2}-\d{2}$'),
     level: str | None = Query(None, pattern='^(debug|info|warning|error|critical)$'),
     q: str | None = Query(None, max_length=200),
     request_id: str | None = Query(None, max_length=120),
     limit: int = Query(200, ge=1, le=1000),
 ):
-    return await query_logs(level, q, request_id, limit)
+    return await query_logs(date, level, q, request_id, limit)

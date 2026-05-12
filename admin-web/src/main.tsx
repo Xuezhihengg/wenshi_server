@@ -13,7 +13,7 @@ type Order = { id: string; user_id: string; plan: string; channel: string; statu
 type FeedbackItem = { id: string; user_id: string; user_display_name: string; user_contact?: string; type: string; status: string; starred: boolean; description: string; screenshot_urls: string[]; app_version?: string; platform?: string; created_at: string };
 type FeedbackPage = { items: FeedbackItem[]; total: number; limit: number; offset: number };
 type LogItem = { timestamp: string; level: string; event: string; logger: string; message: string; request_id?: string; status_code?: number; path?: string; duration_ms?: number; raw: Record<string, unknown> };
-type LogPage = { items: LogItem[] };
+type LogPage = { date: string; items: LogItem[] };
 type DailyPoint = { date: string; users: number; records: number; orders: number; revenue_cents: number; feedback: number };
 type PortalDailyPoint = { date: string; visits: number; unique_visitors: number; sessions: number };
 type DistributionItem = { label: string; count: number };
@@ -93,6 +93,7 @@ function App() {
   const [previewImage, setPreviewImage] = useState<ImagePreview | undefined>();
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | undefined>();
   const [logs, setLogs] = useState<LogItem[]>([]);
+  const [logDate, setLogDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [logLevel, setLogLevel] = useState('all');
   const [logSearch, setLogSearch] = useState('');
   const [selectedLog, setSelectedLog] = useState<LogItem | undefined>();
@@ -117,11 +118,11 @@ function App() {
     return params.toString();
   }, [feedbackImages, feedbackOffset, feedbackSearch, feedbackStarred, feedbackStatus, feedbackType]);
   const logsQuery = useMemo(() => {
-    const params = new URLSearchParams({ limit: '300' });
+    const params = new URLSearchParams({ date: logDate, limit: '300' });
     if (logLevel !== 'all') params.set('level', logLevel);
     if (logSearch.trim()) params.set('q', logSearch.trim());
     return params.toString();
-  }, [logLevel, logSearch]);
+  }, [logDate, logLevel, logSearch]);
 
   async function login(event: React.FormEvent) {
     event.preventDefault();
@@ -257,6 +258,7 @@ function App() {
     try {
       const data = await api<LogPage>(`/api/v1/admin/logs?${logsQuery}`, token);
       setLogs(data.items);
+      setLogDate(data.date);
     } catch (err) {
       showToast(err instanceof Error ? err.message : '日志加载失败');
     } finally {
@@ -323,7 +325,7 @@ function App() {
       {activeSection === 'users' ? <UsersSection users={users} analytics={analytics} analyticsDays={analyticsDays} onAnalyticsDaysChange={setAnalyticsDays} /> : null}
       {activeSection === 'revenue' ? <RevenueSection analytics={analytics} analyticsDays={analyticsDays} onAnalyticsDaysChange={setAnalyticsDays} orders={orders} /> : null}
       {activeSection === 'portal' ? <PortalSection traffic={portalTraffic} analyticsDays={analyticsDays} onAnalyticsDaysChange={setAnalyticsDays} /> : null}
-      {activeSection === 'logs' ? <LogsSection logs={logs} level={logLevel} search={logSearch} onLevelChange={setLogLevel} onSearchChange={setLogSearch} onSelect={setSelectedLog} /> : null}
+      {activeSection === 'logs' ? <LogsSection logs={logs} date={logDate} level={logLevel} search={logSearch} onDateChange={setLogDate} onLevelChange={setLogLevel} onSearchChange={setLogSearch} onSelect={setSelectedLog} /> : null}
       {activeSection === 'feedback' ? <FeedbackSection
         feedback={feedback}
         total={feedbackTotal}
@@ -429,9 +431,28 @@ function PortalSection({ traffic, analyticsDays, onAnalyticsDaysChange }: { traf
   </>;
 }
 
-function LogsSection({ logs, level, search, onLevelChange, onSearchChange, onSelect }: { logs: LogItem[]; level: string; search: string; onLevelChange: (value: string) => void; onSearchChange: (value: string) => void; onSelect: (item: LogItem) => void }) {
+function LogsSection({
+  logs,
+  date,
+  level,
+  search,
+  onDateChange,
+  onLevelChange,
+  onSearchChange,
+  onSelect,
+}: {
+  logs: LogItem[];
+  date: string;
+  level: string;
+  search: string;
+  onDateChange: (value: string) => void;
+  onLevelChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
+  onSelect: (item: LogItem) => void;
+}) {
   return <section className="logs-panel">
     <div className="logs-toolbar">
+      <label className="log-date-picker">日期<input type="date" value={date} onChange={event => onDateChange(event.target.value)} /></label>
       <div className="filter-group">
         {['all', 'info', 'warning', 'error', 'critical'].map(value => <button key={value} className={level === value ? 'active' : ''} onClick={() => onLevelChange(value)}>{logLevelLabel(value)}</button>)}
       </div>

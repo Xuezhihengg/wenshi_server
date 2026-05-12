@@ -4,6 +4,12 @@
 
 ## 1. 阿里云控制台准备
 
+### ICP 备案
+
+如果 ECS 是中国内地区域，`wenshi.xin` 解析到该 ECS 并对外提供 Web 服务前，通常需要先完成 ICP 备案。未备案域名在中国内地服务器上使用 `80/443` 提供网站服务时，可能无法正常访问或被云厂商拦截。
+
+如果 ECS 是中国香港或海外区域，备案要求不同，但国内访问延迟、短信/邮箱回调、App 审核材料仍需另行评估。
+
 ### 域名解析
 
 在阿里云 DNS 解析中添加：
@@ -34,35 +40,52 @@ ECS 安全组入方向至少开放：
 
 ## 2. ECS 安装基础软件
 
-以下以 Ubuntu 22.04/24.04 为例：
+你的 ECS 内核 `al8` 属于阿里云 Alibaba Cloud Linux 8 系列，没有 `apt`，使用 `dnf`/`yum`。
+
+### Alibaba Cloud Linux 8 / CentOS 8 系
 
 ```bash
-sudo apt update
-sudo apt install -y ca-certificates curl git ufw
+sudo dnf makecache
+sudo dnf install -y yum-utils ca-certificates curl git tar
 
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-. /etc/os-release
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo systemctl enable --now docker
 sudo usermod -aG docker "$USER"
+
+docker --version
+docker compose version
 ```
 
-重新登录 SSH，让 Docker 用户组生效。
-
-可选防火墙：
+如果 Docker 官方源访问慢，可以改用阿里云源：
 
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw --force enable
+sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+sudo dnf makecache
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
+
+重新登录 SSH，让 Docker 用户组生效。也可以临时用 `sudo docker ...` 继续操作。
+
+国内 ECS 拉 Docker 官方镜像可能较慢。建议在阿里云控制台进入「容器镜像服务 ACR → 镜像工具 → 镜像加速器」，获取你的专属加速地址，并按控制台提示写入 `/etc/docker/daemon.json`。
+
+### 防火墙
+
+阿里云 ECS 首要看「安全组」是否开放 `80/443`。系统内防火墙如果启用了 `firewalld`，再执行：
+
+```bash
+sudo firewall-cmd --state || true
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+```
+
+如果 `firewall-cmd` 提示未安装或未运行，通常只配置阿里云安全组即可。
+
+### Ubuntu 备选
+
+如果以后换成 Ubuntu 22.04/24.04，再使用 `apt` 安装 Docker。当前这台 AL8 不需要执行 Ubuntu 命令。
 
 ## 3. 上传代码
 
