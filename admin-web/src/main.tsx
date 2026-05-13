@@ -60,7 +60,7 @@ type Analytics = {
 };
 
 async function api<T>(path: string, token?: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...options,
     headers: {
       'content-type': 'application/json',
@@ -70,6 +70,12 @@ async function api<T>(path: string, token?: string, options: RequestInit = {}): 
   });
   if (!response.ok) throw new Error(await response.text());
   return response.json();
+}
+
+function apiUrl(path: string) {
+  const base = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${normalizedPath}`;
 }
 
 function App() {
