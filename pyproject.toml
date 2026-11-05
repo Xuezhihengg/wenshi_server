@@ -47,9 +47,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Xuezhihengg/wenshi-server"
-Repository = "https://github.com/Xuezhihengg/wenshi-server"
-Issues = "https://github.com/Xuezhihengg/wenshi-server/issues"
+Homepage = "https://github.com/Xuezhihengg/wenshi_server"
+Repository = "https://github.com/Xuezhihengg/wenshi_server"
+Issues = "https://github.com/Xuezhihengg/wenshi_server/issues"
 
 [tool.uv]
 package = false

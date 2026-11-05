@@ -89,8 +89,8 @@ Do not expose PostgreSQL `5432`, Redis `6379` or the API `8000` to the public ne
 sudo mkdir -p /opt/wenshi
 sudo chown -R "$USER":"$USER" /opt/wenshi
 cd /opt/wenshi
-git clone https://github.com/Xuezhihengg/wenshi-server.git
-git clone https://github.com/Xuezhihengg/wenshi-portal.git
+git clone https://github.com/Xuezhihengg/wenshi_server.git
+git clone https://github.com/Xuezhihengg/wenshi_portal.git
 ```
 
 The production Compose file in `wenshi-server` builds the portal from the sibling directory `../wenshi-portal`.

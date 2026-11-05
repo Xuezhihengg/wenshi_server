@@ -4,7 +4,7 @@
 
 # 问事 Server
 
-[![CI](https://github.com/Xuezhihengg/wenshi-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Xuezhihengg/wenshi-server/actions/workflows/ci.yml)
+[![CI](https://github.com/Xuezhihengg/wenshi_server/actions/workflows/ci.yml/badge.svg)](https://github.com/Xuezhihengg/wenshi_server/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -86,8 +86,8 @@
 
 ```bash
 mkdir -p ~/code && cd ~/code
-git clone https://github.com/Xuezhihengg/wenshi-server.git
-git clone https://github.com/Xuezhihengg/wenshi-portal.git
+git clone https://github.com/Xuezhihengg/wenshi_server.git
+git clone https://github.com/Xuezhihengg/wenshi_portal.git
 
 cd wenshi-server
 cp .env.example .env
@@ -237,8 +237,8 @@ docker-compose.prod.yml 生产覆盖配置
 
 ## 关联仓库
 
-- [wenshi-app](https://github.com/Xuezhihengg/wenshi-app)：Expo / React Native 客户端
-- [wenshi-portal](https://github.com/Xuezhihengg/wenshi-portal)：官网、隐私政策与反馈入口
+- [wenshi-app](https://github.com/Xuezhihengg/wenshi_app)：Expo / React Native 客户端
+- [wenshi-portal](https://github.com/Xuezhihengg/wenshi_portal)：官网、隐私政策与反馈入口
 
 ## 安全
 
