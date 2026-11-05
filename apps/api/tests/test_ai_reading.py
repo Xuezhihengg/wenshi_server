@@ -116,6 +116,72 @@ async def test_ai_reading_generates_and_persists(monkeypatch, client, auth_heade
     assert saved.json()['payload']['analysis']['aiReadingStructured']['expected_time_text'] == '近三日或子日见动静'
 
 
+async def test_trial_ai_quota_counts_success_only(monkeypatch, client, auth_headers):
+    calls = 0
+
+    async def fake_create(self, messages, *, temperature=0.2, max_tokens=1200):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError('temporary failure')
+        return {
+            'verdict': '此事可成',
+            'expected_time_text': '近日',
+            'timeline': [],
+            'points': [],
+            'status': 'ready',
+        }
+
+    monkeypatch.setenv('LLM_API_KEY', 'test-key')
+    monkeypatch.setenv('LLM_PROVIDER', 'nvidia')
+    get_settings.cache_clear()
+    monkeypatch.setattr(OpenAICompatibleLLMProvider, 'create_json', fake_create)
+    record = await create_record(client, auth_headers)
+
+    failed = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert failed.status_code == 502
+
+    first = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert first.status_code == 200
+    second = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert second.status_code == 200
+    blocked = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert blocked.status_code == 403
+    assert blocked.json()['detail']['code'] == 'ai_quota_exceeded'
+    assert blocked.json()['detail']['limit'] == 2
+
+
+async def test_monthly_ai_quota_and_yearly_unlimited(monkeypatch, client, auth_headers):
+    async def fake_create(self, messages, *, temperature=0.2, max_tokens=1200):
+        return {
+            'verdict': '此事可成',
+            'expected_time_text': '近日',
+            'timeline': [],
+            'points': [],
+            'status': 'ready',
+        }
+
+    monkeypatch.setenv('LLM_API_KEY', 'test-key')
+    monkeypatch.setenv('LLM_PROVIDER', 'nvidia')
+    get_settings.cache_clear()
+    monkeypatch.setattr(OpenAICompatibleLLMProvider, 'create_json', fake_create)
+    record = await create_record(client, auth_headers)
+
+    order_response = await client.post('/api/v1/memberships/orders', headers=auth_headers, json={'plan': 'monthly', 'channel': 'mock'})
+    await client.post('/api/v1/memberships/mock-callback', json={'provider_order_id': order_response.json()['provider_order_id'], 'success': True})
+    for _ in range(20):
+        response = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+        assert response.status_code == 200
+    blocked = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert blocked.status_code == 403
+    assert blocked.json()['detail']['limit'] == 20
+
+    yearly_order = await client.post('/api/v1/memberships/orders', headers=auth_headers, json={'plan': 'yearly', 'channel': 'mock'})
+    await client.post('/api/v1/memberships/mock-callback', json={'provider_order_id': yearly_order.json()['provider_order_id'], 'success': True})
+    allowed = await client.post(f"/api/v1/records/{record['id']}/ai-reading", headers=auth_headers)
+    assert allowed.status_code == 200
+
+
 def test_prompt_contains_professional_context():
     class Note:
         fulfilled = True

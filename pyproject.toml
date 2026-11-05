@@ -2,6 +2,19 @@
 name = "wenshi-server"
 version = "0.1.0"
 description = "Backend and monitoring system for Wenshi app."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Wenshi contributors" }]
+keywords = ["fastapi", "divination", "liuyao", "expo", "open-source"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Framework :: FastAPI",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
 requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.13.3",
@@ -32,6 +45,11 @@ dev = [
   "pytest-asyncio>=0.24.0",
   "ruff>=0.6.9",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Xuezhihengg/wenshi-server"
+Repository = "https://github.com/Xuezhihengg/wenshi-server"
+Issues = "https://github.com/Xuezhihengg/wenshi-server/issues"
 
 [tool.uv]
 package = false

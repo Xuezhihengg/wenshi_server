@@ -80,8 +80,8 @@ function apiUrl(path: string) {
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('wenshi.admin.token') || '');
-  const [username, setUsername] = useState('admin@wenshi.local');
-  const [password, setPassword] = useState('admin123456');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [activeSection, setActiveSection] = useState<SectionKey>('overview');
   const [stats, setStats] = useState<Stats>();
   const [analytics, setAnalytics] = useState<Analytics>();

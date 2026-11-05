@@ -6,6 +6,7 @@ from app.schemas.auth import (
     BindCodeRequest,
     BindWithCodeRequest,
     DeactivateAccountRequest,
+    GoogleLoginRequest,
     LoginWithCodeRequest,
     PhoneTokenLoginRequest,
     RefreshTokenRequest,
@@ -19,6 +20,7 @@ from app.services.auth import (
     deactivate_account,
     login_with_apple,
     login_with_code,
+    login_with_google,
     login_with_phone_token,
     refresh_token,
     send_bind_verification_code,
@@ -63,6 +65,11 @@ async def bind_account(payload: BindWithCodeRequest, user: CurrentUser, db: DbSe
 @router.post('/login/apple', response_model=TokenPair)
 async def apple_login(payload: AppleLoginRequest, db: DbSession):
     return await login_with_apple(db, payload)
+
+
+@router.post('/login/google', response_model=TokenPair)
+async def google_login(payload: GoogleLoginRequest, db: DbSession):
+    return await login_with_google(db, payload)
 
 
 @router.post('/login/phone-token', response_model=TokenPair)

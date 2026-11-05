@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img" aria-label="Wenshi system architecture">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfaf6"/>
+      <stop offset="1" stop-color="#f1eee5"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b7a5e"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1b1b1b" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="820" fill="url(#bg)"/>
+
+  <text x="80" y="78" fill="#171717" font-family="'PingFang SC','Noto Sans SC','Helvetica Neue',sans-serif" font-size="34" font-weight="700">System Architecture</text>
+  <text x="80" y="112" fill="#6f685c" font-family="'Helvetica Neue',Arial,sans-serif" font-size="17" letter-spacing="1">WENSHI · REQUEST FLOW AND SERVICE BOUNDARIES</text>
+  <rect x="80" y="132" width="72" height="4" rx="2" fill="#b8945a"/>
+
+  <!-- clients -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="190" width="360" height="104" rx="16" fill="#171717"/>
+    <rect x="80" y="324" width="360" height="104" rx="16" fill="#ffffff" stroke="#ded7c7"/>
+    <rect x="80" y="458" width="360" height="104" rx="16" fill="#ffffff" stroke="#ded7c7"/>
+  </g>
+  <text x="112" y="232" fill="#f7f3ea" font-family="'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="700">Mobile App</text>
+  <text x="112" y="262" fill="#c9a66b" font-family="'Helvetica Neue',Arial,sans-serif" font-size="15">Expo · React Native</text>
+  <text x="112" y="366" fill="#171717" font-family="'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="700">Portal</text>
+  <text x="112" y="396" fill="#6f685c" font-family="'Helvetica Neue',Arial,sans-serif" font-size="15">React · Vite · Public site</text>
+  <text x="112" y="500" fill="#171717" font-family="'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="700">Admin Console</text>
+  <text x="112" y="530" fill="#6f685c" font-family="'Helvetica Neue',Arial,sans-serif" font-size="15">React · Vite · Operations</text>
+
+  <!-- nginx -->
+  <g filter="url(#shadow)">
+    <rect x="600" y="250" width="320" height="260" rx="18" fill="#fffdf8" stroke="#b8945a" stroke-width="1.5"/>
+  </g>
+  <text x="632" y="294" fill="#171717" font-family="'Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">Nginx</text>
+  <text x="632" y="326" fill="#8b7a5e" font-family="'Helvetica Neue',Arial,sans-serif" font-size="14" letter-spacing="1">TLS · STATIC · REVERSE PROXY</text>
+  <g fill="#4f4a40" font-family="'SFMono-Regular',Menlo,monospace" font-size="14">
+    <text x="632" y="368">/           → portal</text>
+    <text x="632" y="398">/admin/     → admin-web</text>
+    <text x="632" y="428">/api/v1/    → FastAPI</text>
+    <text x="632" y="458">/uploads/   → static files</text>
+  </g>
+
+  <!-- api -->
+  <g filter="url(#shadow)">
+    <rect x="1080" y="210" width="380" height="270" rx="18" fill="#171717"/>
+  </g>
+  <text x="1112" y="254" fill="#f7f3ea" font-family="'Helvetica Neue',Arial,sans-serif" font-size="26" font-weight="700">FastAPI</text>
+  <text x="1112" y="286" fill="#c9a66b" font-family="'Helvetica Neue',Arial,sans-serif" font-size="14" letter-spacing="1">APPLICATION SERVICES</text>
+  <g fill="#e9e2d4" font-family="'Helvetica Neue',Arial,sans-serif" font-size="15">
+    <text x="1112" y="330">Auth · Profiles · Records</text>
+    <text x="1112" y="360">Memberships · Feedback</text>
+    <text x="1112" y="390">Notifications · Admin</text>
+    <text x="1112" y="420">Uploads · Audit logs</text>
+  </g>
+
+  <!-- data -->
+  <g filter="url(#shadow)">
+    <rect x="1000" y="570" width="170" height="116" rx="16" fill="#f4f8f2" stroke="#b9cbb9"/>
+    <rect x="1195" y="570" width="170" height="116" rx="16" fill="#fdf4f2" stroke="#e2c4ba"/>
+    <rect x="1390" y="570" width="170" height="116" rx="16" fill="#f5f2fb" stroke="#cfc4e6"/>
+  </g>
+  <text x="1028" y="612" fill="#2f4b36" font-family="'Helvetica Neue',Arial,sans-serif" font-size="19" font-weight="700">PostgreSQL</text>
+  <text x="1028" y="640" fill="#5d6f61" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13">Primary data</text>
+  <text x="1223" y="612" fill="#6b3a2d" font-family="'Helvetica Neue',Arial,sans-serif" font-size="19" font-weight="700">Redis</text>
+  <text x="1223" y="640" fill="#806157" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13">Codes · Limits</text>
+  <text x="1418" y="612" fill="#453a63" font-family="'Helvetica Neue',Arial,sans-serif" font-size="19" font-weight="700">LLM Provider</text>
+  <text x="1418" y="640" fill="#6f6688" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13">AI readings</text>
+
+  <!-- arrows -->
+  <g stroke="#8b7a5e" stroke-width="1.6" fill="none" marker-end="url(#arrow)">
+    <path d="M440 242 C520 242 520 300 600 300"/>
+    <path d="M440 376 L600 376"/>
+    <path d="M440 510 C520 510 520 440 600 440"/>
+    <path d="M920 360 L1080 360"/>
+    <path d="M1160 480 L1085 570"/>
+    <path d="M1270 480 L1270 570"/>
+    <path d="M1380 480 L1460 570"/>
+  </g>
+  <g fill="#8b7a5e" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13">
+    <text x="486" y="226">HTTPS</text>
+    <text x="486" y="362">HTTPS</text>
+    <text x="486" y="534">HTTPS</text>
+    <text x="940" y="346">HTTP</text>
+  </g>
+
+  <text x="80" y="742" fill="#6f685c" font-family="'Helvetica Neue',Arial,sans-serif" font-size="14">Only nginx exposes 80/443 in production. PostgreSQL, Redis and the API stay on the internal network.</text>
+  <text x="80" y="770" fill="#9a9183" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13">Uploads are stored on the API volume and served through /uploads.</text>
+</svg>

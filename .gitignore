@@ -1,16 +1,41 @@
 .env
-.venv
+.env.*
+!.env.example
+.venv/
 __pycache__/
+*.py[cod]
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-*.pyc
-.DS_Store
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 node_modules/
 dist/
-.coverage
-htmlcov/
+build/
+*.egg-info/
 
+# Secrets and local certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+infra/nginx/certs/
 
+# Runtime data
 data/uploads/
 data/logs/
+data/backups/
+*.sqlite3
+
+# Git bundles and archives can contain full history, including deleted data
+*.bundle
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

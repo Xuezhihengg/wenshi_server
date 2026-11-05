@@ -31,8 +31,10 @@ services:
       dockerfile: apps/api/Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://wenshi:wenshi@postgres:5432/wenshi}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      # Build container URLs from the database credentials so a local .env can
+      # keep localhost URLs for running uvicorn outside Docker.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-wenshi}:${POSTGRES_PASSWORD:-wenshi}@postgres:5432/${POSTGRES_DB:-wenshi}
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "${API_HOST_PORT:-8000}:8000"
     volumes:
@@ -51,8 +53,8 @@ services:
       dockerfile: apps/api/Dockerfile
     env_file: .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://wenshi:wenshi@postgres:5432/wenshi}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-wenshi}:${POSTGRES_PASSWORD:-wenshi}@postgres:5432/${POSTGRES_DB:-wenshi}
+      REDIS_URL: redis://redis:6379/0
     volumes:
       - logs_data:/app/data/logs
     depends_on:

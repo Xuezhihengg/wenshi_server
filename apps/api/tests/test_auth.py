@@ -248,3 +248,82 @@ async def test_apple_login_rejects_mismatched_user(monkeypatch, client):
         json={'apple_id': 'apple-sub-client', 'identity_token': 'apple.identity.token.for.tests'},
     )
     assert response.status_code == 401
+
+
+async def test_google_login_verifies_identity_token(monkeypatch, client):
+    def fake_verify(identity_token: str):
+        assert identity_token == 'google.identity.token.for.tests'
+        return {
+            'sub': 'google-sub-1',
+            'email': 'google@example.com',
+            'name': 'Google 测试用户',
+            'picture': 'https://example.com/avatar.png',
+        }
+
+    monkeypatch.setattr('app.services.auth.verify_google_identity_token', fake_verify)
+
+    login_response = await client.post(
+        '/api/v1/auth/login/google',
+        json={'identity_token': 'google.identity.token.for.tests'},
+    )
+    assert login_response.status_code == 200
+    tokens = login_response.json()
+    assert tokens['is_new_user'] is True
+    assert tokens['profile_completed'] is False
+
+    me_response = await client.get('/api/v1/auth/me', headers={'Authorization': f"Bearer {tokens['access_token']}"})
+    assert me_response.status_code == 200
+    me = me_response.json()
+    assert me['google_id'] == 'google-sub-1'
+    assert me['email'] == 'google@example.com'
+    assert me['display_name'] == 'Google 测试用户'
+    assert me['avatar_url'] == 'https://example.com/avatar.png'
+    assert me['register_provider'] == 'google'
+
+    second_response = await client.post('/api/v1/auth/login/google', json={'identity_token': 'google.identity.token.for.tests'})
+    assert second_response.status_code == 200
+    assert second_response.json()['is_new_user'] is False
+
+
+async def test_google_login_binds_existing_email_user(monkeypatch, client):
+    code_response = await client.post('/api/v1/auth/code', json={'destination': 'same-google@example.com', 'channel': 'email', 'purpose': 'login'})
+    email_login = await client.post(
+        '/api/v1/auth/login/code',
+        json={'destination': 'same-google@example.com', 'channel': 'email', 'code': code_response.json()['mock_code']},
+    )
+    assert email_login.status_code == 200
+
+    monkeypatch.setattr(
+        'app.services.auth.verify_google_identity_token',
+        lambda identity_token: {'sub': 'google-sub-same-email', 'email': 'same-google@example.com', 'name': 'Same Email'},
+    )
+
+    google_login = await client.post('/api/v1/auth/login/google', json={'identity_token': 'google.identity.token.for.tests'})
+    assert google_login.status_code == 200
+    assert google_login.json()['is_new_user'] is False
+
+    me_response = await client.get('/api/v1/auth/me', headers={'Authorization': f"Bearer {google_login.json()['access_token']}"})
+    assert me_response.status_code == 200
+    me = me_response.json()
+    assert me['email'] == 'same-google@example.com'
+    assert me['google_id'] == 'google-sub-same-email'
+    assert me['register_provider'] == 'email'
+
+
+async def test_google_login_rejects_disabled_user(monkeypatch, client):
+    monkeypatch.setattr(
+        'app.services.auth.verify_google_identity_token',
+        lambda identity_token: {'sub': 'google-sub-disabled', 'email': 'google-disabled@example.com'},
+    )
+    login_response = await client.post('/api/v1/auth/login/google', json={'identity_token': 'google.identity.token.for.tests'})
+    assert login_response.status_code == 200
+    tokens = login_response.json()
+    deactivate_response = await client.post(
+        '/api/v1/auth/deactivate',
+        headers={'Authorization': f"Bearer {tokens['access_token']}"},
+        json={'reason': 'test cleanup'},
+    )
+    assert deactivate_response.status_code == 200
+
+    next_response = await client.post('/api/v1/auth/login/google', json={'identity_token': 'google.identity.token.for.tests'})
+    assert next_response.status_code == 403

@@ -53,3 +53,32 @@ async def test_membership_order_mock_callback(client, auth_headers):
     current = await client.get('/api/v1/memberships/current', headers=auth_headers)
     assert current.status_code == 200
     assert current.json()['status'] == 'active'
+
+
+async def test_trial_profile_limit_counts_self_profile(client, auth_headers):
+    for index in range(4):
+        response = await client.post('/api/v1/profiles', headers=auth_headers, json={'name': f'档案{index}', 'relation': '朋友', 'gender': '未填写', 'birthday': '未填写'})
+        assert response.status_code == 201
+
+    blocked = await client.post('/api/v1/profiles', headers=auth_headers, json={'name': '第六个', 'relation': '朋友', 'gender': '未填写', 'birthday': '未填写'})
+    assert blocked.status_code == 403
+    assert blocked.json()['detail']['code'] == 'profile_limit_exceeded'
+    assert blocked.json()['detail']['limit'] == 5
+
+
+async def test_monthly_and_yearly_profile_limits(client, auth_headers):
+    order_response = await client.post('/api/v1/memberships/orders', headers=auth_headers, json={'plan': 'monthly', 'channel': 'mock'})
+    await client.post('/api/v1/memberships/mock-callback', json={'provider_order_id': order_response.json()['provider_order_id'], 'success': True})
+
+    for index in range(19):
+        response = await client.post('/api/v1/profiles', headers=auth_headers, json={'name': f'月度{index}', 'relation': '朋友', 'gender': '未填写', 'birthday': '未填写'})
+        assert response.status_code == 201
+
+    blocked = await client.post('/api/v1/profiles', headers=auth_headers, json={'name': '月度超限', 'relation': '朋友', 'gender': '未填写', 'birthday': '未填写'})
+    assert blocked.status_code == 403
+    assert blocked.json()['detail']['limit'] == 20
+
+    yearly_order = await client.post('/api/v1/memberships/orders', headers=auth_headers, json={'plan': 'yearly', 'channel': 'mock'})
+    await client.post('/api/v1/memberships/mock-callback', json={'provider_order_id': yearly_order.json()['provider_order_id'], 'success': True})
+    allowed = await client.post('/api/v1/profiles', headers=auth_headers, json={'name': '年度不限', 'relation': '朋友', 'gender': '未填写', 'birthday': '未填写'})
+    assert allowed.status_code == 201

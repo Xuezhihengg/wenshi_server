@@ -4,6 +4,8 @@ os.environ.setdefault('DATABASE_URL', 'postgresql+asyncpg://wenshi:wenshi@localh
 os.environ.setdefault('ENVIRONMENT', 'test')
 os.environ.setdefault('REDIS_URL', 'redis://localhost:6379/15')
 os.environ.setdefault('JWT_SECRET', 'test-secret-with-more-than-thirty-two-bytes')
+os.environ.setdefault('ADMIN_USERNAME', 'admin@wenshi.local')
+os.environ.setdefault('ADMIN_PASSWORD', 'test-admin-password')
 os.environ['PHONE_VERIFICATION_PROVIDER'] = 'mock'
 os.environ['EMAIL_VERIFICATION_PROVIDER'] = 'mock'
 

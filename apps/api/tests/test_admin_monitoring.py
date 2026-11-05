@@ -12,7 +12,11 @@ async def test_admin_and_monitoring(client):
     assert health.status_code == 200
     assert health.json()['status'] == 'ok'
 
-    login = await client.post('/api/v1/admin/login', json={'username': 'admin@wenshi.local', 'password': 'admin123456'})
+    settings = get_settings()
+    login = await client.post(
+        '/api/v1/admin/login',
+        json={'username': settings.admin_username, 'password': settings.admin_password},
+    )
     assert login.status_code == 200
     token = login.json()['access_token']
 

@@ -43,6 +43,10 @@ class AppleLoginRequest(BaseModel):
     display_name: str | None = None
 
 
+class GoogleLoginRequest(BaseModel):
+    identity_token: str = Field(min_length=20, max_length=4096)
+
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
@@ -71,11 +75,13 @@ class UserOut(BaseModel):
     email: str | None
     apple_id: str | None
     wechat_id: str | None
+    google_id: str | None
     display_name: str
     avatar_url: str | None
     register_provider: str
     membership_plan: str
     membership_status: str
+    membership_expires_at: datetime | None
     profile_completed: bool
     created_at: datetime
     last_login_at: datetime | None

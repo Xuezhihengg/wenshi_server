@@ -26,6 +26,7 @@ class AuthProvider(StrEnum):
     email = 'email'
     apple = 'apple'
     wechat = 'wechat'
+    google = 'google'
 
 
 class OrderChannel(StrEnum):
@@ -68,6 +69,7 @@ class User(UUIDMixin, TimestampMixin, Base):
     email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     apple_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     wechat_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
+    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(80), default='问事用户')
     avatar_url: Mapped[str | None] = mapped_column(Text)
     register_provider: Mapped[AuthProvider] = mapped_column(Enum(AuthProvider), default=AuthProvider.phone, nullable=False)
@@ -120,6 +122,18 @@ class FortuneRecord(UUIDMixin, TimestampMixin, Base):
     notes: Mapped[list['VerificationNote']] = relationship(back_populates='record', cascade='all, delete-orphan')
 
     __table_args__ = (Index('ix_records_user_cast_at', 'user_id', 'cast_at'),)
+
+
+class AIReadingUsageEvent(UUIDMixin, TimestampMixin, Base):
+    __tablename__ = 'ai_reading_usage_events'
+
+    user_id: Mapped[str] = mapped_column(uuid_column_type(), ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    record_id: Mapped[str | None] = mapped_column(uuid_column_type(), ForeignKey('fortune_records.id', ondelete='SET NULL'), index=True)
+    plan: Mapped[MembershipPlan] = mapped_column(Enum(MembershipPlan), nullable=False)
+    used_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
+    lang: Mapped[str] = mapped_column(String(8), default='zh', nullable=False)
+
+    __table_args__ = (Index('ix_ai_usage_user_used_at', 'user_id', 'used_at'),)
 
 
 class VerificationNote(UUIDMixin, TimestampMixin, Base):

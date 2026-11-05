@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Profile, User
 from app.schemas.profile import ProfileCreate, ProfileUpdate
+from app.services.limits import assert_profile_quota
 
 
 async def list_profiles(db: AsyncSession, user: User) -> list[Profile]:
@@ -15,6 +16,7 @@ async def get_self_profile(db: AsyncSession, user: User) -> Profile | None:
 
 
 async def create_profile(db: AsyncSession, user: User, payload: ProfileCreate) -> Profile:
+    await assert_profile_quota(db, user)
     if payload.is_selected:
         await db.execute(update(Profile).where(Profile.user_id == user.id).values(is_selected=False))
     profile = Profile(user_id=user.id, **payload.model_dump())

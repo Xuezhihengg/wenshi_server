@@ -1,0 +1,46 @@
+name: Bug report
+description: 报告可复现的问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请先搜索已有 Issue，并移除日志中的密钥、手机号、邮箱和用户数据。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题描述
+      description: 发生了什么？你期望发生什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动 ...
+        2. 访问 ...
+        3. 看到 ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本 / 提交
+      placeholder: main @ abc1234
+  - type: dropdown
+    id: area
+    attributes:
+      label: 影响范围
+      options:
+        - API
+        - Admin web
+        - Deployment
+        - Documentation
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志
+      description: 请先脱敏。
+      render: shell

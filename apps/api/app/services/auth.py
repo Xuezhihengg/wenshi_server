@@ -23,6 +23,7 @@ from app.schemas.auth import (
     BindCodeRequest,
     BindWithCodeRequest,
     DeactivateAccountRequest,
+    GoogleLoginRequest,
     LoginWithCodeRequest,
     PhoneTokenLoginRequest,
     SendCodeRequest,
@@ -230,6 +231,50 @@ async def login_with_apple(db: AsyncSession, payload: AppleLoginRequest) -> Toke
     return _token_pair(user, is_new_user)
 
 
+async def login_with_google(db: AsyncSession, payload: GoogleLoginRequest) -> TokenPair:
+    google_claims = verify_google_identity_token(payload.identity_token)
+    google_id = str(google_claims.get('sub') or '')
+    if not google_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid Google identity token')
+
+    token_email = google_claims.get('email')
+    email = str(token_email) if token_email else None
+    display_name = str(google_claims.get('name') or 'Google 用户')
+    avatar_url = str(google_claims.get('picture') or '') or None
+
+    user = await db.scalar(select(User).where(User.google_id == google_id))
+    if not user and email:
+        user = await db.scalar(select(User).where(User.email == email))
+        if user and not user.google_id:
+            user.google_id = google_id
+    if user and user.disabled:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Account is disabled')
+    is_new_user = user is None
+    if not user:
+        user = User(
+            google_id=google_id,
+            email=email,
+            display_name=display_name,
+            avatar_url=avatar_url,
+            register_provider=AuthProvider.google,
+        )
+        db.add(user)
+        await db.flush()
+        await ensure_default_profile(db, user)
+    else:
+        if email and not user.email:
+            user.email = email
+        if avatar_url and not user.avatar_url:
+            user.avatar_url = avatar_url
+        if display_name and user.display_name == '问事用户':
+            user.display_name = display_name
+    user.last_login_at = utc_now()
+    await write_audit_log(db, user.id, 'auth.google_login', 'user', user.id)
+    await db.commit()
+    await refresh_user_profile_completed(db, user)
+    return _token_pair(user, is_new_user)
+
+
 def verify_apple_identity_token(identity_token: str) -> dict:
     settings = get_settings()
     try:
@@ -245,6 +290,23 @@ def verify_apple_identity_token(identity_token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid Apple identity token') from exc
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Unable to verify Apple identity token') from exc
+
+
+def verify_google_identity_token(identity_token: str) -> dict:
+    settings = get_settings()
+    try:
+        signing_key = jwt.PyJWKClient(settings.google_jwks_url).get_signing_key_from_jwt(identity_token)
+        return jwt.decode(
+            identity_token,
+            signing_key.key,
+            algorithms=['RS256'],
+            audience=settings.google_client_ids,
+            issuer=[settings.google_issuer, 'accounts.google.com'],
+        )
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid Google identity token') from exc
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Unable to verify Google identity token') from exc
 
 
 async def login_with_phone_token(db: AsyncSession, payload: PhoneTokenLoginRequest) -> TokenPair:

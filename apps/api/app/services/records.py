@@ -18,6 +18,7 @@ from app.schemas.record import (
     VerificationNoteIn,
     VerificationNoteUpdate,
 )
+from app.services.limits import assert_ai_quota, record_ai_usage
 
 
 def _hexagram_name(payload: dict, explicit: str | None) -> str | None:
@@ -376,6 +377,7 @@ async def update_record(db: AsyncSession, user: User, record_id: str, payload: R
 
 async def generate_ai_reading(db: AsyncSession, user: User, record_id: str, lang: str = 'zh') -> AIReadingOut:
     record = await get_record(db, user, record_id)
+    plan, _ = await assert_ai_quota(db, user)
     record.ai_reading_status = 'generating'
     await db.commit()
     provider = get_llm_provider()
@@ -388,6 +390,7 @@ async def generate_ai_reading(db: AsyncSession, user: User, record_id: str, lang
         payload['analysis'] = analysis
         record.payload = payload
         record.ai_reading_status = 'ready'
+        await record_ai_usage(db, user, record.id, plan, lang)
         await db.commit()
         return reading
     except HTTPException:

@@ -1,3 +1,4 @@
+from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.models import AuditLog, Feedback, PortalVisit, User
 from sqlalchemy import select
@@ -20,7 +21,11 @@ async def test_public_feedback_enters_admin_panel_and_rate_limits(client):
     assert response.json()['app_version'] == 'portal'
     assert response.json()['screenshot_urls'] == []
 
-    login = await client.post('/api/v1/admin/login', json={'username': 'admin@wenshi.local', 'password': 'admin123456'})
+    settings = get_settings()
+    login = await client.post(
+        '/api/v1/admin/login',
+        json={'username': settings.admin_username, 'password': settings.admin_password},
+    )
     token = login.json()['access_token']
     headers = {'Authorization': f'Bearer {token}'}
 
@@ -91,7 +96,11 @@ async def test_public_portal_visit_enters_admin_traffic(client):
     assert response.json()['language'] == 'en'
     assert response.json()['session_id'] == 'session-public-test'
 
-    login = await client.post('/api/v1/admin/login', json={'username': 'admin@wenshi.local', 'password': 'admin123456'})
+    settings = get_settings()
+    login = await client.post(
+        '/api/v1/admin/login',
+        json={'username': settings.admin_username, 'password': settings.admin_password},
+    )
     headers = {'Authorization': f"Bearer {login.json()['access_token']}"}
     traffic = await client.get('/api/v1/admin/portal-traffic?days=7', headers=headers)
     assert traffic.status_code == 200

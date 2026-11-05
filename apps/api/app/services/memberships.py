@@ -8,9 +8,9 @@ from app.models import MembershipPlan, MembershipStatus, Order, OrderChannel, Or
 from app.providers.payment import payment_provider
 
 PLAN_CONFIG = {
-    MembershipPlan.trial: {'title': '体验用户', 'price_cents': 0, 'privileges': ['基础起卦', '本地记录', '基础档案']},
-    MembershipPlan.monthly: {'title': '月度会员', 'price_cents': 1800, 'privileges': ['云端同步', '高级统计', '更多档案', '优先功能']},
-    MembershipPlan.yearly: {'title': '年度会员', 'price_cents': 18800, 'privileges': ['月度全部权益', '年度优惠', '长期记录归档', '会员标识']},
+    MembershipPlan.trial: {'title': '体验用户', 'price_cents': 0, 'privileges': ['铜钱起卦、装卦与初断功能', '历史记录无限保存', '最多保存 5 个问事档案', '每日 2 次 AI 解卦额度']},
+    MembershipPlan.monthly: {'title': '月度会员', 'price_cents': 1800, 'privileges': ['历史记录无限保存', '最多保存 20 个问事档案', '每日 20 次 AI 解卦额度']},
+    MembershipPlan.yearly: {'title': '年度会员', 'price_cents': 18800, 'privileges': ['问事档案无限保存', 'AI 解卦额度无限使用', '年度深度复盘报告']},
 }
 
 

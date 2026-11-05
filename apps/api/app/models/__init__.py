@@ -1,5 +1,6 @@
 from app.models.entities import (
     AdminSession,
+    AIReadingUsageEvent,
     AuditLog,
     AuthProvider,
     Feedback,
@@ -22,6 +23,7 @@ from app.models.entities import (
 
 __all__ = [
     'AdminSession',
+    'AIReadingUsageEvent',
     'AuditLog',
     'AuthProvider',
     'Feedback',
